@@ -1,84 +1,177 @@
 /**
- * Eim.js v0.1
- * Common functions for websites
+ * Eim v0.1
+ * github.com/rafbgarcia/eimjs.git
  *
  * Dependencies: jQuery 1.8.2
- *
- * @author Rafael Garcia
  */
 
-var Eim = function() {
-	var _ = this;
+(function(window) {
+	var Eim = {};
 
 	/**
 	 * Form validation
+	 * @params form, fields, onError, onSuccess
 	 */
-	_.formValidate = function(form, fields, callback) {
-		var i,
-			errors = {},
-			val = '';
-		form.submit(function() {
-			for(i in Object.keys(fields)) {
-				val = form.children(i);
-				console.log(i);
+	Eim.Form = {};
+	Eim.Form.validate = function(_p) {
+		var i, j, count, _field, _validators, _val, fields, form, _err = {}, errors = {};
+
+		form 	= _p.form   || $('form');
+		fields 	= _p.fields || {};
+
+		_p.onSuccess = _p.onSuccess || function(form) {
+			form.submit();
+		};
+		_p.onBlur	 = _p.onBlur || function(err) {
+			console.log(err);
+			// Clean errors for the next field
+			_err = {};
+		};
+		_p.onError 	 = _p.onError || function(errors) {
+			for(i in errors) {
+				console.log(errors[i]);
 			}
-		});
+		};
+
+
+		if( ! form.length) {
+			throw 'There is no forms on the page';
+		}
+
+		// Trigger validators on blur
+		for(i in fields) {
+			// i = field name
+			(function(i) {
+
+				$('input[name="' + i + '"]').blur(function() {
+					_field 		= fields[i];
+					_validators = _field.validators;
+					_val		= $(this).val();
+
+					if(_validators.hasOwnProperty('isValid')) {
+						if( ! _validators.isValid(_val)) {
+							_err[i] = _validators.errMessage;
+						}
+					}
+					// Multiple validators
+					else {
+						for(j in _validators) {
+							// Sets only one message per validation
+							if( ! _err[i] && ! _validators[j].isValid(_val)) {
+								_err[i] = _validators[j].errMessage;
+							}
+						}
+					}
+
+					if(_err[i]) {
+						_p.onBlur(_err[i]);
+					}
+				});
+
+			})(i);
+		}
+
+
+		// TODO validate onsubmit too
+
+		// form.submit(function(e) {
+		// 	e.prevenDefault();
+		// });
 	};
 
 	// Validation types
-	_.validation = {
-		// Checks if email is valid
-		email: function(errMessage) {
-			return {
-				isValid: function(val) {
-					// TODO
-				}
-				errMessage: errMessage || 'Email is invalid';
-			};
-		},
-		minLength: function(length, errMessage) {
-			return {
-				isValid: function(val) {
-					// TODO dar trim no valor
-					return val.length >= length;
-				}
-				errMessage: errMessage || ['The text is too short, minimum length is', length].join(' ');
-			};
-		},
-		maxLength: function(length, errMessage) {
-			return {
-				isValid: function(val) {
-					// TODO dar trim no valor
-					return val.length <= length;
-				}
-				errMessage: errMessage || ['The text is too long, maximum length is', length].join(' ');
-			};
-		},
-		between: function(min, max, errMessage) {
-			return {
-				isValid: function(val) {
-					// TODO dar trim no valor
-					return val.length >= min && val.length <= max;
-				},
-				errMessage: errMessage || ['The text must have length between', min, 'and', max].join(' ');
-			};
-		},
-		// Checks if field has only numeric values
-		integer: function(errMessage) {
-			return {
-				isValid: function(val) {
-					return val.test(/\d+/);
-				}
-				errMessage: errMessage || 'Field accepts only numeric values';
-			};
-		}
-	};
+	Eim.Form.validators = (function() {
+		return {
+			required: function(errMessage) {
+				return {
+					errMessage: errMessage || 'Field is required',
+					isValid: function(val) {
+						// TODO trim
+						return !!val
+					}
+				};
+			},
+
+			email: function(errMessage) {
+				return {
+					isValid: function(val) {
+						if(val && 'email_is_valid') {
+							// TODO
+							return true;
+						}
+						return false;
+					},
+					errMessage: errMessage || 'Email is invalid'
+				};
+			},
+
+			minLength: function(length, errMessage) {
+				return {
+					isValid: function(val) {
+						// TODO dar trim no valor
+						return val.length >= length;
+					},
+					errMessage: errMessage || ['The text is too short, minimum length is', length].join(' ')
+				};
+			},
+
+			maxLength: function(length, errMessage) {
+				return {
+					isValid: function(val) {
+						// TODO dar trim no valor
+						return val.length <= length;
+					},
+					errMessage: errMessage || ['The text is too long, maximum length is', length].join(' ')
+				};
+			},
+
+			between: function(min, max, errMessage) {
+				return {
+					isValid: function(val) {
+						// TODO dar trim no valor
+						return val.length >= min && val.length <= max;
+					},
+					errMessage: errMessage || ['The text must have length between', min, 'and', max].join(' ')
+				};
+			},
+
+			integer: function(errMessage) {
+				return {
+					isValid: function(val) {
+						return val.test(/\d+/);
+					},
+					errMessage: errMessage || 'Field accepts only numeric values'
+				};
+			},
+
+			min: function(number, errMessage) {
+				return {
+					isValid: function(val) {
+						if( ! val) return true;
+						return val >= number;
+					},
+					errMessage: errMessage || ['Minimum value is', number].join(' ')
+				};
+			},
+
+			max: function(number, errMessage) {
+				return {
+					isValid: function(val) {
+						return val <= number;
+					},
+					errMessage: errMessage || ['Maximum value is', number].join(' ')
+				};
+			}
+		};
+	})();
+
+
 
 	/**
 	 * Send message
 	 * Send a message to the user
 	 */
-	_.sendMessage = function(message, title) {
+	Eim.sendMessage = function(message, title) {
 		// TODO
 	};
 
@@ -89,7 +182,7 @@ var Eim = function() {
 	 * Improve input files
 	 * Gives a better visual for input files
 	 */
-	_.improveInputFile = function(obj) {
+	Eim.improveInputFile = function(obj) {
 		obj = obj || $('input:file');
 		// TODO
 	};
@@ -102,7 +195,7 @@ var Eim = function() {
 	 *				   it will be triggered if form has fields with value == placeholder
 	 * 				   callback(fieldsNamesWithErrors, submittedForm)
 	 */
-	_.placeholder = function(callback) {
+	Eim.placeholder = function(callback) {
 		// Apply the function only on IE
 		if(navigator.appName === 'Microsoft Internet Explorer') {
 			var _this, i, that, _inputs,
@@ -165,6 +258,6 @@ var Eim = function() {
 	};
 
 
-	// Return obj
-	return _;
-}();
+	window.Eim = Eim;
+})(window);
+
