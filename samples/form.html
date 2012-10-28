@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Form validation</title>
+    </head>
+    <body>
+
+        <form action="" method="post" id="form">
+            <div>
+                <label for="">Name</label>
+                <input type="text" name="name">
+            </div>
+            <div>
+                <label for="">Email</label>
+                <input type="text" name="email">
+            </div>
+            <div>
+                <label for="">Age</label>
+                <input type="text" name="age">
+            </div>
+            <button type="submit">Test</button>
+        </form>
+
+
+        <script type="text/javascript" src="./assets/jquery.js"></script>
+        <script type="text/javascript" src="../eim.js"></script>
+        <script type="text/javascript">
+            $(function() {
+                var form_contact, form_register,
+                    validators = Eim.Form.validators;
+
+                form_contact = new Eim.Form({
+                    element: $('form_contact'),
+                    fields : {
+                        email: {
+                            validators: [validators.required(), validators.email()]
+                        },
+                        name: {
+                            validators: [validators.required(), validators.between(4, 30)]
+                        },
+                        age: {
+                            validators: [validators.required(), validators.min(14)]
+                        }
+                    }
+                });
+
+                form_register = new Eim.Form({
+                    element: $('#form_register'),
+                    fields : {
+                        email: {
+                            validators: [validators.required(), validators.email()]
+                        },
+                        password: {
+                            validators: [validators.required(), validators.between(4, 30)]
+                        },
+                        password_confirm: {
+                            validators: [validators.required(), validators.match('password')]
+                        }
+                    }
+                });
+            });
+        </script>
+
+
+
+    </body>
+</html>
