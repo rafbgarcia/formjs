@@ -10,10 +10,11 @@
         Form;
 
     Form = function(_p) {
-        var _f, _v, j, _e, i,
+        var _f, _v, j, _e, i, _val, _err,
             _that      = this,
             _errors    = {},
             _fields    = _p.fields,
+
             _addError = function(fieldName, error) {
                 if(_fields.hasOwnProperty(fieldName)) {
                     _errors[fieldName]          = error;
@@ -41,7 +42,7 @@
             },
             _hasErrors = function() {
                 for(i in _fields) {
-                    if(_errors.hasOwnProperty(i)) {
+                    if(_fields[i].hasError) {
                         return true;
                     }
                 }
@@ -50,47 +51,68 @@
             _bind = function(data) {
                 for(i in data) {
                     if(_fields.hasOwnProperty(i)) {
-                        _validate(i, data[i], function(err) {
-                            if(err) {
-                                _addError(i, err);
-                            }
-                            _fields[i].value = data[i];
-                        });
+                        _fields[i].value = data[i];
                     }
                 }
+                return this;
             },
-            _validate = function(fieldName, value, callback) {
+            __validateField = function(fieldName, callback) {
                 _clearErrors(fieldName);
-                _f = _fields[fieldName];
-                _v = _f.validators;
-                _e = false;
+                _f   = _fields[fieldName];
+                _val = _f.value;
+                _v   = _f.validators;
+                _e   = false;
+                j;
 
-
-                if(_v) {
-                   if(_v.hasOwnProperty('isValid')) {
-                        if( ! _v.isValid(value)) {
-                            _e = true;
-                            callback(_v.errMessage);
-                        }
+               if(_v.hasOwnProperty('isValid')) {
+                    if( ! _v.isValid(_val)) {
+                        _e = _v.errMessage;
+                        _addError(fieldName, _e);
+                        callback(_e);
                     }
-                    // Multiple validators
-                    else if(_v.length) {
-                        for(j in _v) {
-                            // Sets only one message per validation
-                            if( ! _f.hasErrors && ! _v[j].isValid(value)) {
-                                _e = true;
-                                callback(_v[j].errMessage);
+                }
+                // Multiple validators
+                else if(_v.length) {
+                    for(j in _v) {
+                        // Sets only one message per validation
+                        if( ! _f.hasError) {
+                            if( ! _v[j].isValid(_val)) {
+                                _e = _v[j].errMessage;
+                                _addError(fieldName, _e);
+                                callback(_e);
                             }
                         }
                     }
                 }
-                // if has not validators or errors
-                if( ! _v || ! _e) {
+
+                if( ! _e) {
                     callback();
                 }
+            },
+            __validateForm = function(callback) {
+                var _err = false;
+                for(i in _fields) {
+                    __validateField(i, function(err) {
+                        if(err) {
+                            _err = true;
+                        }
+                    });
+                }
+                callback(_err);
+            },
+            _validate = function(fieldName, callback) {
+                if(typeof fieldName === 'function') {
+                    callback = fieldName;
+                    __validateForm(callback);
+                }
+                else if(typeof fieldName === 'string') {
+                    __validateField(fieldName, callback);
+                }
+                return this;
             };
 
         return {
+            element: _p.form,
             fields: _getFields,
             errors: _getErrors,
             hasErrors: _hasErrors,
@@ -255,7 +277,7 @@
 
 
             // Checks if the form has fields with value attribute equals to placeholder
-            if(callback && typeof callback === 'function') {
+            if(typeof callback === 'function') {
                 forms.submit(function(e) {
                     errors  = [];
                     that    = $(this);

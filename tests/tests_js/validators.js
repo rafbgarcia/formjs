@@ -33,7 +33,10 @@ test('match', function() {
     // Insert a test field
     $('#qunit').after('<input id="password" name="password" value="test value" style="display:none">');
 
-    var _validate = function(field) {
+    _validate('password');
+    _validate($('#password'));
+
+    function _validate(field) {
         t = validators.match(field);
 
         ok( t.isValid('test value') );
@@ -41,9 +44,6 @@ test('match', function() {
         ok( ! t.isValid('must fail') );
         equal( t.errMessage, 'Field does not match with field password' );
     }
-
-    _validate('password');
-    _validate($('#password'));
 });
 
 
@@ -109,6 +109,7 @@ test('between', function() {
     ok( t.isValid('9') );
 
     ok( ! t.isValid(11) );
+    ok( ! t.isValid(-1) );
     ok( ! t.isValid(0) );
     ok( ! t.isValid('11') );
     ok( ! t.isValid('0') );
@@ -127,8 +128,8 @@ test('minLength', function() {
     ok( t.isValid('Jack') );
     ok( t.isValid('a  b') );
 
-    ok( ! t.isValid('Yes') );
-    ok( ! t.isValid('No') );
+    ok( ! t.isValid('Foo') );
+    ok( ! t.isValid('Bar') );
     ok( ! t.isValid('      ') );
     ok( ! t.isValid('   a   ') );
 });
@@ -151,5 +152,6 @@ test('betweenLength', function() {
     ok( t.isValid(123) );
 
     ok( ! t.isValid('Should not pass') );
+    ok( ! t.isValid('   ') );
     ok( ! t.isValid('Has more than 10 characters') );
 });
