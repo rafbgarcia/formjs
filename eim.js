@@ -22,10 +22,6 @@
                 }
             },
             _clearErrors = function(fieldName) {
-                // console.log(_errors);
-                // console.log(fieldName);
-                // console.log(_errors.hasOwnProperty(fieldName));
-
                 if(_errors.hasOwnProperty(fieldName)) {
                     _errors[fieldName] = undefined;
                 }
@@ -112,7 +108,10 @@
             return {
                 errMessage: errMessage || 'Field is required',
                 isValid: function(val) {
-                    return !!val.trim()
+                    if(typeof val !== 'number') {
+                        return !!val.trim()
+                    }
+                    return true;
                 }
             };
         },
@@ -120,7 +119,6 @@
             var regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
             return {
                 isValid: function(val) {
-                    test = regex.test(val);
                     if(val && regex.test(val)) {
                         return true;
                     }
@@ -162,23 +160,22 @@
                 errMessage: errMessage || 'Field accepts only numeric values'
             };
         },
-        min: function(number, errMessage) {
+        min: function(value, errMessage) {
             return {
                 isValid: function(val) {
                     val = parseInt(val, 10);
-                    if(typeof val !== 'number' && !val)
-                        return true;
-                    return val >= number;
+                    return val >= value;
                 },
-                errMessage: errMessage || ['Minimum value is', number].join(' ')
+                errMessage: errMessage || ['Minimum value is', value].join(' ')
             };
         },
-        max: function(number, errMessage) {
+        max: function(value, errMessage) {
             return {
                 isValid: function(val) {
-                    return val <= number;
+                    val = parseInt(val, 10);
+                    return val <= value;
                 },
-                errMessage: errMessage || ['Maximum value is', number].join(' ')
+                errMessage: errMessage || ['Maximum value is', value].join(' ')
             };
         },
         between: function(min, max, errMessage) {
@@ -207,97 +204,9 @@
 
 
 
-
-
-
-
-
-
-
-    /**
-     * Form validation
-     * @params form, fields, onError, onSuccess
-     */
-
-     /*
-    Eim.Form = {};
-    Eim.Form.validate = function(_p) {
-        var i, j, count, that, _field, _validators, _val, fields, form, _err = {}, errors = {}, has_errors = false;
-
-        form    = _p.form   || $('form');
-        fields  = _p.fields || {};
-
-        _p.onSuccess = _p.onSuccess || function(form) {
-            form.submit();
-        };
-        _p.onBlur    = _p.onBlur || function(err, field) {
-            console.log(field + ': ' +err);
-            // Clean errors for the next field
-            _err = {};
-        };
-        _p.onError   = _p.onError || function(errors) {
-            for(i in errors) {
-                console.log(errors[i]);
-            }
-        };
-
-
-        if( ! form.length) {
-            throw 'There are no forms on the page';
-        }
-
-        // Trigger validators on blur
-        for(i in fields) {
-            // i = field name
-            (function(i) {
-
-                $('input[name="' + i + '"]').blur(function() {
-                    that        = $(this);
-                    _field      = fields[i];
-                    _validators = _field.validators;
-                    _val        = that.val();
-
-
-                    if(_validators.hasOwnProperty('isValid')) {
-                        if( ! _validators.isValid(_val)) {
-                            _err[i] = _validators.errMessage;
-                        }
-                    }
-                    // Multiple validators
-                    else {
-                        for(j in _validators) {
-                            // Sets only one message per validation
-                            if( ! _err[i] && ! _validators[j].isValid(_val)) {
-                                _err[i] = _validators[j].errMessage;
-                            }
-                        }
-                    }
-
-                    if(_err[i]) {
-                        _p.onBlur(_err[i], that);
-                    }
-                });
-
-            })(i);
-        }
-
-
-        // TODO validate onsubmit too
-
-        // form.submit(function(e) {
-        //  e.prevenDefault();
-        // });
-    };
-
-    // Validation types
-    Eim.Form.
-
-
-
     Eim.sendMessage = function(message, title) {
         // TODO
     };
-
 
 
     Eim.improveInputFile = function(obj) {
@@ -312,6 +221,7 @@
      * @param callback set a callback if you need to validate your form fields,
      *                 it will be triggered if form has fields with value == placeholder
      *                 callback(fieldsNamesWithErrors, submittedForm)
+     */
     Eim.placeholder = function(callback) {
         // Apply the function only on IE
         if(navigator.appName === 'Microsoft Internet Explorer') {
@@ -374,7 +284,6 @@
         }
     };
 
-     */
 
     window.Eim = Eim;
 })(window);

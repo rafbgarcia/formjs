@@ -48,35 +48,41 @@ test('validate', function() {
 	});
 });
 
-test('bind', function() {
+test('bind & hasErrors', function() {
+	// valid data
 	form.bind({
 		name : 'person name',
-		email: 'test@gmail.com'
+		email: 'test@gmail.com',
+		age: 15
 	});
 
-	equal( form.hasErrors(), false, 'No errors' );
 	equal( form.fields('email').value, 'test@gmail.com');
 	equal( form.fields('name').value, 'person name');
-	equal( form.fields('age').value, undefined);
-});
+	equal( form.fields('age').value, 15);
+	equal( form.fields('email').hasError, undefined);
+	equal( form.fields('name').hasError, undefined);
+	equal( form.fields('age').hasError, undefined);
+	equal( form.hasErrors(), false);
 
-test('hasErrors', function() {
+
+	// invalid data
 	form.bind({
-		email: 'wrong email',
-		name : 'a'
+		name : 'person name is too looooooooooong',
+		email: 'invalid email',
+		age: 11
 	});
 
+	equal( form.fields('email').value, 'invalid email');
+	equal( form.fields('name').value, 'person name is too looooooooooong');
+	equal( form.fields('age').value, 11);
 	equal( form.fields('email').hasError, true);
 	equal( form.fields('name').hasError, true);
-	equal( form.fields('age').hasError, undefined);
-	equal( form.fields('email').value, 'wrong email');
-	equal( form.fields('name').value, 'a');
-	equal( form.fields('age').value, undefined);
-
+	equal( form.fields('age').hasError, true);
 	equal( form.hasErrors(), true);
 	deepEqual( form.errors(), {
-	  	"email": "Email is invalid",
-	  	"name": "The text must have length between 4 and 30"
+		age: "Minimum value is 14",
+		email: "Email is invalid",
+		name: "The text must have length between 4 and 30"
 	} );
 });
 
