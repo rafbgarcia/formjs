@@ -270,7 +270,7 @@
                         _inputs.each(function() {
                             _this = $(this);
                             if(valueEqualsPlaceholder(_this)) {
-                                errors.push(_this.attr('name'));
+                                errors.push(_this);
                             }
                         });
 
