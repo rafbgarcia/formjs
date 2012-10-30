@@ -224,6 +224,21 @@
     };
 
 
+    Eim.Slider = function(_p) {
+        // Implementation sample
+        _p = {
+            targets: $('#images .item, #descriptions .item'), // Fade
+            triggers: $('#controls a'), // trigger fade
+            targetActiveClass: 'active', // target class
+            triggerActiveClass: 'active', //trigger class
+            isNumeric: false, // true: [1]  [2]  [3]  [4];    false:  [<]  [>]
+            needCss: false,
+            needBuildTriggersHtml: false
+        };
+
+        // TODO
+    };
+
 
 
     Eim.sendMessage = function(message, title) {
