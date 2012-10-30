@@ -14,11 +14,11 @@ do(window) ->
     # Validators
     Eim.validators =
         required: (errMessage) ->
-            errMessage: errMessage or 'Field is required',
             isValid: (val) ->
                 if(typeof val != 'number')
                     return !!val.trim()
                 return true
+            errMessage: errMessage or 'Field is required',
 
         email: (errMessage) ->
             regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
@@ -28,7 +28,6 @@ do(window) ->
                     return true
                 return false
             errMessage: errMessage or 'Email is invalid'
-
 
         minLength: (length, errMessage) ->
             isValid: (val) ->
@@ -78,18 +77,104 @@ do(window) ->
             errMessage: errMessage or ['Field does not match with field', field.attr('name')].join(' ')
 
 
+
+
+    Eim.Slider = (_p) ->
+        # Implementation sample
+        _p =
+            targets: $('#images .item, #descriptions .item') # targets which will receive the effect
+            triggers: $('#controls a')                       # numeric triggers
+            targetActiveClass: 'active'                      # active class for target
+            triggerActiveClass: 'active'                     # active class for trigger
+            sliderType: 'numeric'                            # numeric, side, both
+            needCss: false
+            needBuildTriggersHtml: false
+
+        # TODO
+
+
+
+    Eim.sendMessage = (message, title) ->
+        # TODO
+
+
+    Eim.improveInputFile = (obj) ->
+        obj = obj or $('input:file')
+        # TODO
+
+
+    ###
+    Placeholder (for IE only)
+    @param callback set a callback if you need to validate your form fields,
+           it will be triggered if form has fields with value == placeholder
+           callback(fieldsNamesWithErrors, submittedForm)
+     ###
+    Eim.placeholder = (callback) ->
+        # Apply the function only on IE
+        if(navigator.appName == 'Microsoft Internet Explorer')
+            submited = {}
+            inputs   = $(':input[placeholder]')
+            forms    = $('form')
+            errors   = []
+            valueEqualsPlaceholder = (element) ->
+                element.val() == element.attr('placeholder')
+
+
+            # Input actions
+            inputs.each(() ->
+                _this = $(this)
+                _this.val(_this.attr('placeholder'))
+            )
+            .focus(() ->
+                _this = $(this)
+                if(valueEqualsPlaceholder(_this))
+                    _this.val('')
+            )
+            .blur () ->
+                _this = $(this)
+                if( ! _this.val())
+                    _this.val(_this.attr('placeholder'))
+
+
+            # Checks if the form has fields with value attribute equals to placeholder
+            if(typeof callback == 'function')
+                forms.submit (e) ->
+                    errors  = []
+                    that    = $(this)
+                    i       = that.index(forms)
+                    _inputs = that.find('input[placeholder]')
+
+                    # Avoids recursion
+                    if( ! submited[i])
+                        e.preventDefault()
+                        submited[i] = true
+
+                        _inputs.each () ->
+                            _this = $(this)
+                            if(valueEqualsPlaceholder(_this))
+                                errors.push(_this)
+
+                        if(errors.length)
+                            submited[i] = false
+
+                        callback(errors, that)
+
+
+
+
     Form = (data) ->
         formFields = data.fields
         formErrors = {}
 
-        _validateField = (fieldName, callback) ->
+
+        _validateField = (fieldName, callback) =>
             @clearErrors(fieldName)
             field       = formFields[fieldName]
             fieldValue  = field.value
             validator   = field.validators
             err         = false
 
-           if(validator.hasOwnProperty('isValid'))
+            if(validator.hasOwnProperty('isValid'))
                 if( ! validator.isValid(fieldValue))
                     err = validator.errMessage
                     @addError(fieldName, err)
@@ -110,13 +195,14 @@ do(window) ->
 
 
         _validateForm = (callback) ->
-            err = false
+            error = false
             for i of formFields
                 _validateField i, (err) ->
                     if(err)
-                        err = true
+                        error = true
 
-            callback(err)
+            callback(error)
+
 
 
         @element  = data.form
@@ -131,21 +217,17 @@ do(window) ->
             formFields[fieldName].hasError = undefined
             formFields[fieldName].error    = undefined
 
-        @getFields = (name) ->
+        @fields = (name) ->
             (name and formFields[name]) or formFields
 
-            # if(name and formFields[name])
-            #     return formFields[name]
-            # formFields
-
-        @getErrors = () ->
+        @errors = () ->
             formErrors
 
         @hasErrors = () ->
             for i of formFields
                 if(formFields[i].hasError)
-                    true
-            false
+                    return true
+            return false
 
         @bind = (data) ->
             for i of data
@@ -157,13 +239,15 @@ do(window) ->
         @validate = (fieldName, callback) ->
             if(typeof fieldName == 'function')
                 callback = fieldName
-                __validateForm(callback)
+                _validateForm(callback)
 
             else if(typeof fieldName == 'string')
-                __validateField(fieldName, callback)
+                _validateField(fieldName, callback)
 
             @
 
-        @
+
+        return @
+
 
     window.Eim = Eim
