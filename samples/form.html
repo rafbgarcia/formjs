@@ -29,6 +29,10 @@
                 <textarea name="text" id="" cols="30" rows="10"></textarea>
             </div>
             <div>
+                <label for="">Custom validator</label>
+                <input type="text" name="custom">
+            </div>
+            <div>
                 <label for="">Howmany people?</label>
                 <select name="people" id="">
                     <option value="">Select</option>
@@ -47,6 +51,12 @@
         $(function() {
             var form,
                 validators = Eim.validators;
+            validators.custom = {
+                isValid: function(val) {
+                    return val === "Hello there";
+                },
+                errMessage: 'Value must be "Hello there"'
+            };
 
             form = Eim.Form({
                 form: $('#form'),
@@ -65,6 +75,9 @@
                     },
                     people: {
                         validators: [validators.required(), validators.max(4, 'Sorry, only 4 people are allowed!')]
+                    },
+                    custom: {
+                        validators: validators.custom
                     }
                 },
                 fieldBlur: true, // true if you want validation on field blur

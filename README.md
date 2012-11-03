@@ -15,6 +15,23 @@ _View samples page for examples of implementation_
 
 Form validation is easy as follow:
 
+    <form action="" method="post" id="form">
+        <div>
+            <label for="">Name</label>
+            <input type="text" name="name">
+        </div>
+        <div>
+            <label for="">Email</label>
+            <input type="text" name="email">
+        </div>
+        <div>
+            <label for="">Age</label>
+            <input type="text" name="age">
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+
 	$(function() {
         var form,
             validators = Eim.validators;
@@ -30,12 +47,6 @@ Form validation is easy as follow:
                 },
                 age: {
                     validators: [validators.required(), validators.numeric(), validators.min(14, 'You are too young!')]
-                },
-                text: {
-                    validators: validators.maxLength(10)
-                },
-                people: {
-                    validators: [validators.required(), validators.max(4, 'Sorry, only 4 people are allowed!')]
                 }
             },
             fieldBlur: true, // true if you want validation on field blur
@@ -45,11 +56,20 @@ Form validation is easy as follow:
         });
     });
 
+    <!-- If the field has error, an span will be placed after the input -->
+    ...
+    <div>
+        <label for="">Name</label>
+        <input type="text" name="name">
+        <span class="field-error">Field is required</span>
+    </div>
+    ...
+
 
 
 ## Eim.Validators
 
-`Eim.validators` has validators that you can use to validate anything you need
+You are not required to use integrated to Eim.Form
 
 	$(function() {
 		$('input#email').blur(function() {
@@ -64,6 +84,24 @@ Form validation is easy as follow:
 	});
 
 If you need a custom message: `validators.email('Hey! This is not a valid email!')`
+
+Need a new validator? No problem:
+
+    ...
+    <input type="text" name="custom">
+    ...
+
+    ...
+    validators.custom = {
+        isValid: function(val) {
+            return val === "Hello there";
+        },
+        errMessage: 'Value must be "Hello there"'
+    };
+    ...
+    custom: validators.custom
+    ...
+
 
 
 
