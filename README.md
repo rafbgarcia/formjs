@@ -1,5 +1,61 @@
 
-# In development
+## In development
+
+_View samples page for examples of implementation_
+
+# Form
+
+Form validation is easy as follow:
+
+	$(function() {
+        var form,
+            validators = Eim.validators;
+
+        form = Eim.Form({
+            form: $('#form'),
+            fields : {
+                email: {
+                    validators: [validators.required(), validators.email()]
+                },
+                name: {
+                    validators: [validators.required(), validators.betweenLength(4, 30)]
+                },
+                age: {
+                    validators: [validators.required(), validators.numeric(), validators.min(14, 'You are too young!')]
+                },
+                text: {
+                    validators: validators.maxLength(10)
+                },
+                people: {
+                    validators: [validators.required(), validators.max(4, 'Sorry, only 4 people are allowed!')]
+                }
+            },
+            fieldBlur: true, // true if you want validation on field blur
+            blurType: 'each' // 'each' or 'aio'
+                             // 'each' puts validation below of each field
+                             // 'aio' puts all validations in a single element before form tag
+        });
+    });
+
+## Eim.Validators
+
+`Eim.validators` has validators that you can use to validate anything you need
+
+	$(function() {
+		$('input#email').blur(function() {
+			var _this      = $(this),
+				value 	   = _this.val(),
+				validators = Eim.validators;
+
+			if( ! validators.email().isValid(value)) {
+				_this.css('border-color', '#f00');
+			}
+		});
+	});
+
+If you need a custom message: `validators.email('Hey! This is not a valid email!')`
+
+
 
 # Placeholder
 

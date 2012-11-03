@@ -1,34 +1,37 @@
 var form, f, i,
 validators = Eim.validators,
 formHtml   =
-'<form action="" id="form-test" style="display:none">' +
-	'<input type="text" name="name">' +
-	'<input type="text" name="email">' +
-	'<input type="text" name="age">' +
-	'<button type="submit">Send</button>' +
+'<form action="" id="form-test">' +
+	'<div><label>Name: </label><input type="text" name="name"></div>' +
+	'<div><label>Email: </label><input type="text" name="email"></div>' +
+	'<div><label>Age: </label><input type="text" name="age"></div>' +
+	'<div><button type="submit">Send</button></div>' +
 '</form>'
 ;
 
-$('#qunit').after(formHtml);
+$(function() {
+	$('#qunit').after(formHtml);
+
+	form = Eim.Form({
+		form: $('#form-test'),
+		fields : {
+			email: {
+				validators: [validators.required(), validators.email()]
+			},
+			name: {
+				validators: [validators.required(), validators.betweenLength(4, 30)]
+			},
+			age: {
+				validators: [validators.required(), validators.min(14)]
+			}
+		}
+	});
+});
 
 
 
 module('Form');
 
-form = Eim.Form({
-	form: $('#form-test'),
-	fields : {
-		email: {
-			validators: [validators.required(), validators.email()]
-		},
-		name: {
-			validators: [validators.required(), validators.betweenLength(4, 30)]
-		},
-		age: {
-			validators: [validators.required(), validators.min(14)]
-		}
-	}
-});
 
 test('fields', 7, function() {
 	f = form.fields();
@@ -119,7 +122,7 @@ test('hasErrors', function() {
 		equal(form.fields('name').hasError, true);
 		equal(form.fields('age').hasError, true);
 		equal(form.hasErrors(), true);
-		deepEqual(form.errors(), {
+		deepEqual(form.errors, {
 			age: "Minimum value is 14",
 			email: "Email is invalid",
 			name: "The text must have length between 4 and 30"
@@ -128,3 +131,81 @@ test('hasErrors', function() {
 
 });
 
+test('onBlur', function() {
+	$(function() {
+		var input = $('input[name="email"]'),
+			err;
+
+
+		// blurType = 'each'
+		form = Eim.Form({
+			form: $('#form-test'),
+			fields : {
+				email: {
+					validators: [validators.required(), validators.email()]
+				},
+				name: {
+					validators: [validators.required(), validators.betweenLength(4, 30)]
+				},
+				age: {
+					validators: [validators.required(), validators.min(14)]
+				}
+			},
+			fieldBlur: true,
+			blurType: 'each'
+		});
+
+
+		equal($('.field-error').length, 3);
+
+		input.focus().blur();
+		err = input.next('.field-error');
+
+		equal(err.html(), 'Field is required');
+
+
+		input.val('asd').blur();
+		equal(err.html(), 'Email is invalid');
+
+
+		input.val('valid@gmail.com').blur();
+		equal(err.html(), '');
+
+
+		// blurType = 'aio'
+		form = Eim.Form({
+			form: $('#form-test'),
+			fields : {
+				email: {
+					validators: [validators.required(), validators.email()]
+				},
+				name: {
+					validators: [validators.required(), validators.betweenLength(4, 30)]
+				},
+				age: {
+					validators: [validators.required(), validators.min(14)]
+				}
+			},
+			fieldBlur: true,
+			blurType: 'aio'
+		});
+
+		equal($('#form-errors').length, 1);
+
+		input.val('').blur();
+		err = $('#field-error-email');
+
+		equal($('#form-errors p').length, 1);
+		equal(err.html(), 'email: Field is required');
+
+		input.val('asd').blur();
+		input.val('asasdsdd').blur();
+		input.val('asasdsdd').blur();
+		equal(err.html(), 'email: Email is invalid');
+		equal(err.length, 1);
+
+		input.val('ads@asd.com').blur();
+		equal(err.html(), '');
+
+	});
+});

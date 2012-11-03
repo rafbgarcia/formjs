@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Validators</title>
+    </head>
+    <body>
+
+        <form action="" method="post" id="form">
+            <div>
+                <label for="">Name</label>
+                <input type="text" name="name">
+            </div>
+            <div>
+                <label for="">Email</label>
+                <input type="text" name="email" id="email">
+            </div>
+            <div>
+                <label for="">Age</label>
+                <input type="text" name="age">
+            </div>
+            <button type="submit">Test</button>
+        </form>
+
+
+        <script type="text/javascript" src="./assets/jquery.js"></script>
+        <script type="text/javascript" src="../eim.js"></script>
+        <script type="text/javascript">
+            $(function() {
+                $('input#email').blur(function() {
+
+                    var validators = Eim.validators;
+
+                    Eim.Form({
+                        fields: {
+                            email: {
+                                validators: [validators.required(), validators.email()]
+                            }
+                        },
+                        onBlur: function(valid, field) {
+                            if( ! valid) {
+                                field.css({
+                                    borderColor: 'red',
+                                    color: 'red'
+                                });
+                            }
+                        }
+                    });
+
+                });
+            });
+        </script>
+
+
+
+    </body>
+</html>

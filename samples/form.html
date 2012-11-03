@@ -2,10 +2,15 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Form validation</title>
+        <title>Form</title>
+        <style type="text/css">
+        * {font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #333}
+        label {display: block;}
+        div {margin-bottom: 10px}
+        .field-error{color: #d33;}
+        </style>
     </head>
     <body>
-
         <form action="" method="post" id="form">
             <div>
                 <label for="">Name</label>
@@ -19,18 +24,56 @@
                 <label for="">Age</label>
                 <input type="text" name="age">
             </div>
-            <button type="submit">Test</button>
+            <div>
+                <label for="">Little text</label>
+                <textarea name="text" id="" cols="30" rows="10"></textarea>
+            </div>
+            <div>
+                <label for="">Howmany people?</label>
+                <select name="people" id="">
+                    <option value="">Select</option>
+                    <option value="2">2</option>
+                    <option value="4">4</option>
+                    <option value="8">8</option>
+                </select>
+            </div>
+            <button type="submit">Submit</button>
         </form>
 
 
         <script type="text/javascript" src="./assets/jquery.js"></script>
         <script type="text/javascript" src="../eim.js"></script>
         <script type="text/javascript">
-            $(function() {
+        $(function() {
+            var form,
+                validators = Eim.validators;
+
+            form = Eim.Form({
+                form: $('#form'),
+                fields : {
+                    email: {
+                        validators: [validators.required(), validators.email()]
+                    },
+                    name: {
+                        validators: [validators.required(), validators.betweenLength(4, 30)]
+                    },
+                    age: {
+                        validators: [validators.required(), validators.numeric(), validators.min(14, 'You are too young!')]
+                    },
+                    text: {
+                        validators: validators.maxLength(10)
+                    },
+                    people: {
+                        validators: [validators.required(), validators.max(4, 'Sorry, only 4 people are allowed!')]
+                    }
+                },
+                fieldBlur: true, // true if you want validation on field blur
+                blurType: 'each' // 'each' or 'aio'
+                                 // 'each' puts validation below of each field
+                                 // 'aio' puts all validations in a single element before form tag
             });
+        });
         </script>
-
-
 
     </body>
 </html>

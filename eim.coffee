@@ -8,16 +8,14 @@ do(window) ->
     Eim = {}
 
     # Form
-    Eim.Form = (data) ->
-        new Form(data)
+    Eim.Form = (params) ->
+        new Form(params)
 
     # Validators
     Eim.validators =
         required: (errMessage) ->
             isValid: (val) ->
-                if(typeof val != 'number')
-                    return !!val.trim()
-                return true
+                !!val.toString().trim()
             errMessage: errMessage or 'Field is required',
 
         email: (errMessage) ->
@@ -32,18 +30,18 @@ do(window) ->
         minLength: (length, errMessage) ->
             isValid: (val) ->
                 val.toString().trim().length >= length
-            errMessage: errMessage or ['The text is too short, minimum length is', length].join(' ')
+            errMessage: errMessage or "The text is too short, minimum length is #{length}"
 
         maxLength: (length, errMessage) ->
             isValid: (val) ->
                 val.toString().trim().length <= length
-            errMessage: errMessage or ['The text is too long, maximum length is', length].join(' ')
+            errMessage: errMessage or "The text is too long, maximum length is #{length}"
 
         betweenLength: (minLength, maxLength, errMessage) ->
             isValid: (val) ->
                 valLength = val.toString().trim().length
                 return (valLength >= minLength and valLength <= maxLength)
-            errMessage: errMessage or ['The text must have length between', minLength, 'and', maxLength].join(' ')
+            errMessage: errMessage or "The text must have length between #{minLength} and #{maxLength}"
 
         numeric: (errMessage) ->
             isValid: (val) ->
@@ -54,23 +52,23 @@ do(window) ->
             isValid: (val) ->
                 val = parseInt(val, 10)
                 return val >= value
-            errMessage: errMessage or ['Minimum value is', value].join(' ')
+            errMessage: errMessage or "Minimum value is #{value}"
 
         max: (value, errMessage) ->
             isValid: (val) ->
                 val = parseInt(val, 10)
                 return val <= value
-            errMessage: errMessage or ['Maximum value is', value].join(' ')
+            errMessage: errMessage or "Maximum value is #{value}"
 
         between: (min, max, errMessage) ->
             isValid: (val) ->
                 val = parseInt(val, 10)
                 return val >= min and val <= max
-            errMessage: errMessage or ['The value must be between', min, 'and', max].join(' ')
+            errMessage: errMessage or "The value must be between #{min} and #{max}"
 
         match: (field, errMessage) ->
             if(typeof field == 'string')
-                field = $(['input[name="', field, '"]'].join(''))
+                field = $(":input[name='#{field}']")
 
             isValid: (val) ->
                 return field.val() == val
@@ -142,7 +140,7 @@ do(window) ->
                     errors  = []
                     that    = $(this)
                     i       = that.index(forms)
-                    _inputs = that.find('input[placeholder]')
+                    _inputs = that.find(':input[placeholder]')
 
                     # Avoids recursion
                     if( ! submited[i])
@@ -162,37 +160,45 @@ do(window) ->
 
 
 
-    Form = (data) ->
-        formFields = data.fields
+    Form = (params) ->
+        formFields = params.fields
         formErrors = {}
+        _this      = @
 
+        # Find elements in document
+        ###
+        for i of formFields
+            if @element?
+                formFields[i].element = @element.find("input[name='#{i}']")
+                if ! formFields[i].element
+                    throw "Fields must have it's own name: #{i}"
+        ###
 
         _validateField = (fieldName, callback) =>
             @clearErrors(fieldName)
-            field       = formFields[fieldName]
-            fieldValue  = field.value
-            validator   = field.validators
-            err         = false
+            field      = formFields[fieldName]
+            fieldValue = field.value
+            validators = field.validators
+            err        = false
 
-            if(validator.hasOwnProperty('isValid'))
-                if( ! validator.isValid(fieldValue))
-                    err = validator.errMessage
+            if(validators.hasOwnProperty('isValid'))
+                if( ! validators.isValid(fieldValue))
+                    err = validators.errMessage
                     @addError(fieldName, err)
                     callback(err)
 
             # Multiple validators
-            else if(validator.length)
-                for i of validator
+            else if(validators.length)
+                for i of validators
                     # Sets only one message per validation
                     if( ! field.hasError)
-                        if( ! validator[i].isValid(fieldValue))
-                            err = validator[i].errMessage
+                        if( ! validators[i].isValid(fieldValue))
+                            err = validators[i].errMessage
                             @addError(fieldName, err)
                             callback(err)
 
             if( ! err)
                 callback()
-
 
         _validateForm = (callback) ->
             error = false
@@ -204,30 +210,10 @@ do(window) ->
             callback(error)
 
 
-
-        @element  = data.form
-
-        @addError = (fieldName, error) ->
-            formErrors[fieldName]          = error
-            formFields[fieldName].hasError = true
-            formFields[fieldName].error    = error
-
-        @clearErrors = (fieldName) ->
-            formErrors[fieldName]          = undefined
-            formFields[fieldName].hasError = undefined
-            formFields[fieldName].error    = undefined
+        @element = params.form
 
         @fields = (name) ->
             (name and formFields[name]) or formFields
-
-        @errors = () ->
-            formErrors
-
-        @hasErrors = () ->
-            for i of formFields
-                if(formFields[i].hasError)
-                    return true
-            return false
 
         @bind = (data) ->
             for i of data
@@ -235,6 +221,24 @@ do(window) ->
                     formFields[i].value = data[i]
 
             @
+
+        @errors = formErrors
+
+        @addError = (fieldName, error) ->
+            formErrors[fieldName]          = error
+            formFields[fieldName].hasError = true
+            formFields[fieldName].error    = error
+
+        @hasErrors = () ->
+            for i of formFields
+                if(formFields[i].hasError)
+                    return true
+            return false
+
+        @clearErrors = (fieldName) ->
+            formErrors[fieldName]          = undefined
+            formFields[fieldName].hasError = undefined
+            formFields[fieldName].error    = undefined
 
         @validate = (fieldName, callback) ->
             if(typeof fieldName == 'function')
@@ -245,6 +249,86 @@ do(window) ->
                 _validateField(fieldName, callback)
 
             @
+
+
+        blurType = params.blurType
+
+
+
+        # # On Blur
+
+        # ### Defaults
+
+        _onBlurTarget = (field, form) ->
+            # return target which will receive the errors
+            if blurType == 'each' then field.next('.field-error') else $('#form-errors')
+
+
+        # Each field error has its own element handler
+        _blurEach = (error, target, field, form) ->
+            target.html(error or '')
+
+
+        # All in one: all field errors in one element handler
+        _blurAio  = (err, target, field, form) ->
+            name = field.attr('name')
+            error = $("#field-error-#{name}")
+            if(err)
+                message = "#{name}: #{err}"
+
+                if error.length
+                    if message != error.html()
+                        error.html(message)
+                else
+                    message = "<p id='field-error-#{name}'>#{message}</p>"
+                    target.append(message)
+
+            else if error.length
+                error.html('')
+
+
+
+        if params.fieldBlur == true
+            blurTarget = params.onBlurTarget
+
+            # Gets default onBlurTarget if none is given
+            if typeof blurTarget != 'function'
+                blurTarget = _onBlurTarget
+
+            if blurType? and blurType != 'each'
+                _this.element.before('<div id="form-errors"></div>')
+
+
+            for i of formFields
+                do (i) ->
+                    field = _this.element.find(":input[name='#{i}']")
+
+                    if blurType? and blurType == 'each'
+                        field.after('<span class="field-error"></span>')
+
+                    field.blur (e) ->
+                        data = {}
+                        data[i] = field.val()
+                        _this.bind(data)
+                        _this.validate i, (err) ->
+                            target = blurTarget(field, _this.element)
+
+                            if blurType == 'each'
+                                _blurEach(err, target, field, _this.element)
+                            else if blurType == 'aio'
+                                _blurAio(err, target, field, _this.element)
+
+
+
+
+        # Validates all fields
+        ###
+        if params.onSubmit?
+            @element.blur (e) ->
+                e.preventDefault()
+                params = @element.serialize()
+                console.log(params)
+        ###
 
 
         return @

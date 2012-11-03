@@ -13,17 +13,14 @@ Dependencies: jQuery 1.8.2
   (function(window) {
     var Eim, Form;
     Eim = {};
-    Eim.Form = function(data) {
-      return new Form(data);
+    Eim.Form = function(params) {
+      return new Form(params);
     };
     Eim.validators = {
       required: function(errMessage) {
         return {
           isValid: function(val) {
-            if (typeof val !== 'number') {
-              return !!val.trim();
-            }
-            return true;
+            return !!val.toString().trim();
           },
           errMessage: errMessage || 'Field is required'
         };
@@ -46,7 +43,7 @@ Dependencies: jQuery 1.8.2
           isValid: function(val) {
             return val.toString().trim().length >= length;
           },
-          errMessage: errMessage || ['The text is too short, minimum length is', length].join(' ')
+          errMessage: errMessage || ("The text is too short, minimum length is " + length)
         };
       },
       maxLength: function(length, errMessage) {
@@ -54,7 +51,7 @@ Dependencies: jQuery 1.8.2
           isValid: function(val) {
             return val.toString().trim().length <= length;
           },
-          errMessage: errMessage || ['The text is too long, maximum length is', length].join(' ')
+          errMessage: errMessage || ("The text is too long, maximum length is " + length)
         };
       },
       betweenLength: function(minLength, maxLength, errMessage) {
@@ -64,7 +61,7 @@ Dependencies: jQuery 1.8.2
             valLength = val.toString().trim().length;
             return valLength >= minLength && valLength <= maxLength;
           },
-          errMessage: errMessage || ['The text must have length between', minLength, 'and', maxLength].join(' ')
+          errMessage: errMessage || ("The text must have length between " + minLength + " and " + maxLength)
         };
       },
       numeric: function(errMessage) {
@@ -81,7 +78,7 @@ Dependencies: jQuery 1.8.2
             val = parseInt(val, 10);
             return val >= value;
           },
-          errMessage: errMessage || ['Minimum value is', value].join(' ')
+          errMessage: errMessage || ("Minimum value is " + value)
         };
       },
       max: function(value, errMessage) {
@@ -90,7 +87,7 @@ Dependencies: jQuery 1.8.2
             val = parseInt(val, 10);
             return val <= value;
           },
-          errMessage: errMessage || ['Maximum value is', value].join(' ')
+          errMessage: errMessage || ("Maximum value is " + value)
         };
       },
       between: function(min, max, errMessage) {
@@ -99,12 +96,12 @@ Dependencies: jQuery 1.8.2
             val = parseInt(val, 10);
             return val >= min && val <= max;
           },
-          errMessage: errMessage || ['The value must be between', min, 'and', max].join(' ')
+          errMessage: errMessage || ("The value must be between " + min + " and " + max)
         };
       },
       match: function(field, errMessage) {
         if (typeof field === 'string') {
-          field = $(['input[name="', field, '"]'].join(''));
+          field = $(":input[name='" + field + "']");
         }
         return {
           isValid: function(val) {
@@ -169,7 +166,7 @@ Dependencies: jQuery 1.8.2
             errors = [];
             that = $(this);
             i = that.index(forms);
-            _inputs = that.find('input[placeholder]');
+            _inputs = that.find(':input[placeholder]');
             if (!submited[i]) {
               e.preventDefault();
               submited[i] = true;
@@ -189,29 +186,38 @@ Dependencies: jQuery 1.8.2
         }
       }
     };
-    Form = function(data) {
-      var formErrors, formFields, _validateField, _validateForm,
+    Form = function(params) {
+      var blurTarget, blurType, formErrors, formFields, i, _blurAio, _blurEach, _fn, _onBlurTarget, _validateField, _validateForm,
         _this = this;
-      formFields = data.fields;
+      formFields = params.fields;
       formErrors = {};
+      _this = this;
+      /*
+              for i of formFields
+                  if @element?
+                      formFields[i].element = @element.find("input[name='#{i}']")
+                      if ! formFields[i].element
+                          throw "Fields must have it's own name: #{i}"
+      */
+
       _validateField = function(fieldName, callback) {
-        var err, field, fieldValue, i, validator;
+        var err, field, fieldValue, i, validators;
         _this.clearErrors(fieldName);
         field = formFields[fieldName];
         fieldValue = field.value;
-        validator = field.validators;
+        validators = field.validators;
         err = false;
-        if (validator.hasOwnProperty('isValid')) {
-          if (!validator.isValid(fieldValue)) {
-            err = validator.errMessage;
+        if (validators.hasOwnProperty('isValid')) {
+          if (!validators.isValid(fieldValue)) {
+            err = validators.errMessage;
             _this.addError(fieldName, err);
             callback(err);
           }
-        } else if (validator.length) {
-          for (i in validator) {
+        } else if (validators.length) {
+          for (i in validators) {
             if (!field.hasError) {
-              if (!validator[i].isValid(fieldValue)) {
-                err = validator[i].errMessage;
+              if (!validators[i].isValid(fieldValue)) {
+                err = validators[i].errMessage;
                 _this.addError(fieldName, err);
                 callback(err);
               }
@@ -234,31 +240,9 @@ Dependencies: jQuery 1.8.2
         }
         return callback(error);
       };
-      this.element = data.form;
-      this.addError = function(fieldName, error) {
-        formErrors[fieldName] = error;
-        formFields[fieldName].hasError = true;
-        return formFields[fieldName].error = error;
-      };
-      this.clearErrors = function(fieldName) {
-        formErrors[fieldName] = void 0;
-        formFields[fieldName].hasError = void 0;
-        return formFields[fieldName].error = void 0;
-      };
+      this.element = params.form;
       this.fields = function(name) {
         return (name && formFields[name]) || formFields;
-      };
-      this.errors = function() {
-        return formErrors;
-      };
-      this.hasErrors = function() {
-        var i;
-        for (i in formFields) {
-          if (formFields[i].hasError) {
-            return true;
-          }
-        }
-        return false;
       };
       this.bind = function(data) {
         var i;
@@ -269,6 +253,26 @@ Dependencies: jQuery 1.8.2
         }
         return this;
       };
+      this.errors = formErrors;
+      this.addError = function(fieldName, error) {
+        formErrors[fieldName] = error;
+        formFields[fieldName].hasError = true;
+        return formFields[fieldName].error = error;
+      };
+      this.hasErrors = function() {
+        var i;
+        for (i in formFields) {
+          if (formFields[i].hasError) {
+            return true;
+          }
+        }
+        return false;
+      };
+      this.clearErrors = function(fieldName) {
+        formErrors[fieldName] = void 0;
+        formFields[fieldName].hasError = void 0;
+        return formFields[fieldName].error = void 0;
+      };
       this.validate = function(fieldName, callback) {
         if (typeof fieldName === 'function') {
           callback = fieldName;
@@ -278,6 +282,77 @@ Dependencies: jQuery 1.8.2
         }
         return this;
       };
+      blurType = params.blurType;
+      _onBlurTarget = function(field, form) {
+        if (blurType === 'each') {
+          return field.next('.field-error');
+        } else {
+          return $('#form-errors');
+        }
+      };
+      _blurEach = function(error, target, field, form) {
+        return target.html(error || '');
+      };
+      _blurAio = function(err, target, field, form) {
+        var error, message, name;
+        name = field.attr('name');
+        error = $("#field-error-" + name);
+        if (err) {
+          message = "" + name + ": " + err;
+          if (error.length) {
+            if (message !== error.html()) {
+              return error.html(message);
+            }
+          } else {
+            message = "<p id='field-error-" + name + "'>" + message + "</p>";
+            return target.append(message);
+          }
+        } else if (error.length) {
+          return error.html('');
+        }
+      };
+      if (params.fieldBlur === true) {
+        blurTarget = params.onBlurTarget;
+        if (typeof blurTarget !== 'function') {
+          blurTarget = _onBlurTarget;
+        }
+        if ((blurType != null) && blurType !== 'each') {
+          _this.element.before('<div id="form-errors"></div>');
+        }
+        _fn = function(i) {
+          var field;
+          field = _this.element.find(":input[name='" + i + "']");
+          if ((blurType != null) && blurType === 'each') {
+            field.after('<span class="field-error"></span>');
+          }
+          return field.blur(function(e) {
+            var data;
+            data = {};
+            data[i] = field.val();
+            _this.bind(data);
+            return _this.validate(i, function(err) {
+              var target;
+              target = blurTarget(field, _this.element);
+              if (blurType === 'each') {
+                return _blurEach(err, target, field, _this.element);
+              } else if (blurType === 'aio') {
+                return _blurAio(err, target, field, _this.element);
+              }
+            });
+          });
+        };
+        for (i in formFields) {
+          _fn(i);
+        }
+      }
+      /*
+              if params.onSubmit?
+                  @element.blur (e) ->
+                      e.preventDefault()
+                      params = @element.serialize()
+                      console.log(params)
+      */
+
       return this;
     };
     return window.Eim = Eim;
