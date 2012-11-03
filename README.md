@@ -1,7 +1,15 @@
 
 ## In development
 
+
+### Starting
+
+    <script src="jquery.js"></script>
+    <script src="eim.js"></script>
+
+
 _View samples page for examples of implementation_
+
 
 # Form
 
@@ -36,6 +44,8 @@ Form validation is easy as follow:
                              // 'aio' puts all validations in a single element before form tag
         });
     });
+
+
 
 ## Eim.Validators
 
