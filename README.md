@@ -1,5 +1,4 @@
-
-## In development
+## Still in development, but you already can use what is described below
 
 
 ### Starting
