@@ -77,18 +77,133 @@ do(window) ->
 
 
 
-    Eim.Slider = (_p) ->
-        # Implementation sample
-        _p =
-            targets: $('#images .item, #descriptions .item') # targets which will receive the effect
-            triggers: $('#controls a')                       # numeric triggers
-            targetActiveClass: 'active'                      # active class for target
-            triggerActiveClass: 'active'                     # active class for trigger
-            sliderType: 'numeric'                            # numeric, side, both
-            needCss: false
-            needBuildTriggersHtml: false
+    Eim.Slider = (params) ->
+        new Slider(params)
 
-        # TODO
+
+    Slider = (p) ->
+        throw 'Which are the targets?' if ! p.targets
+        throw 'Which are the triggers?' if ! p.indexTriggers
+
+        transitionDuration = p.transitionDuration or 600
+        visibleTime   = p.visibleTime or 6000
+        targets       = p.targets
+        controls      = (p.indexTriggers and p.indexTriggers.controls) or p.indexTriggers
+        activeClass   = (p.indexTriggers and p.indexTriggers.activeClass) or 'active'
+        count         = targets.length
+        interval      = null
+        firstTarget   = targets.first()
+        lastTarget    = targets.last()
+
+
+        # If targets are less than 2, it does not need any effect, right?
+        return false if count < 2
+
+
+        # Hides all targets except first and add active class on the first control
+        targets.not(':first').hide(0)
+        controls.first().addClass(activeClass)
+
+        _addActiveClass = (i) ->
+            controls.removeClass(activeClass)
+            controls.eq(i).addClass(activeClass)
+
+        _autoSlider = () ->
+            current = targets.first()
+
+            if ! p.inverseDirection
+                interval = window.setInterval(() ->
+                    current = _loadNextTarget(current)
+                , visibleTime)
+            else
+                interval = window.setInterval(() ->
+                    current = _loadPreviousTarget(current)
+                , visibleTime)
+
+
+
+        _loadNextTarget = (current) ->
+            next = current.next(targets)
+            next = (next.length and next) or firstTarget
+            i    = targets.index(next)
+
+            _addActiveClass(i)
+
+            current.stop(true, true).fadeOut(transitionDuration)
+
+            if(typeof p.onTransitionOver != 'function')
+                next.stop(true, true).fadeIn(transitionDuration)
+            else
+                next.stop(true, true).fadeIn transitionDuration, () ->
+                    # I made this hook for testing the transitions, but it may be useful sometimes
+                    # @param next = visible item
+                    p.onTransitionOver(next)
+            next
+
+        _loadPreviousTarget = (current) ->
+            prev = current.prev(targets)
+            prev = (prev.length and prev) or lastTarget
+
+            current.stop(true, true).fadeOut(transitionDuration)
+
+            if(typeof p.onTransitionOver != 'function')
+                prev.stop(true, true).fadeIn(transitionDuration)
+            else
+                prev.stop(true, true).fadeIn transitionDuration, () ->
+                    # I made this hook for testing the transitions, but it may be useful sometimes
+                    # @param prev = visible item
+                    p.onTransitionOver(prev)
+
+            prev
+
+
+        _loadIndexTarget = (i) ->
+            next = targets.eq(i)
+            targets.stop(true, true).fadeOut(transitionDuration)
+            next.stop(true, true).fadeIn(transitionDuration)
+
+            next
+
+
+        # Init slider and its events
+        @init = () ->
+            # Auto slider
+            if p.auto
+                _autoSlider()
+
+            # On click event
+            # Numeric triggers
+            if controls?
+                controls.bind 'click', (e) ->
+                    e.preventDefault()
+                    _this = $(this)
+                    i = controls.index(_this)
+
+                    window.clearInterval(interval)
+
+                    _loadIndexTarget(i)
+                    _addActiveClass(i)
+
+                    _autoSlider()
+
+            return @
+
+
+        # Destroy Slider
+        @destroy = () ->
+            window.clearInterval(interval)
+            controls.unbind('click')
+            return @
+
+
+        # Remake Slider
+        @remake = () ->
+            @init()
+            return @
+
+
+        return @init()
+        # End Slider
 
 
 
@@ -164,15 +279,6 @@ do(window) ->
         formFields = params.fields
         formErrors = {}
         _this      = @
-
-        # Find elements in document
-        ###
-        for i of formFields
-            if @element?
-                formFields[i].element = @element.find("input[name='#{i}']")
-                if ! formFields[i].element
-                    throw "Fields must have it's own name: #{i}"
-        ###
 
         _validateField = (fieldName, callback) =>
             @clearErrors(fieldName)
@@ -327,11 +433,11 @@ do(window) ->
             @element.blur (e) ->
                 e.preventDefault()
                 params = @element.serialize()
-                console.log(params)
         ###
 
 
         return @
+        # End Form
 
 
     window.Eim = Eim
