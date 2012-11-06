@@ -107,78 +107,126 @@ Dependencies: jQuery 1.8.2
       };
     }
   };
+  /*
+      Slider
+  
+      Keep in mind that, because of the targets which can be an array of jQuery elements,
+      this functions works with the indexes of these elements.
+      This way, the number of controls and all targets must be the same, as it actually
+      should be!
+  
+      params example:
+      @param params = {
+          targets           : $('.photos .photo'), // [$('.pictures'), $('.descriptions')]
+          indexControls     : $('.control'),
+          prevControl       : $('.slider-prev'),
+          nextControl       : $('.slider-next'),
+          auto              : false, // Default
+          activeClass       : 'active', // Default
+          transitionDuration: 600, // Default
+          visibleTime       : 6000 // Default
+      }
+  */
+
   Eim.Slider = function(params) {
     return new Slider(params);
   };
   Slider = function(p) {
-    var activeClass, controls, count, firstTarget, interval, lastTarget, targets, targetsActiveClass, transitionDuration, visibleTime, _addActiveClass, _loadNextTarget, _loadPrevTarget, _loadTarget, _setInterval, _startSlider, _stopSlider;
-    if (!p.targets) {
+    var activeClass, controls, count, firstTarget, i, interval, lastTarget, nextControl, prevControl, targets, targetsArr, transitionDuration, visibleTime, _addActiveClass, _loadNextTarget, _loadPrevTarget, _loadTarget, _setInterval, _startSlider, _stopSlider,
+      _this = this;
+    transitionDuration = p.transitionDuration || 600;
+    visibleTime = p.visibleTime || 6000;
+    targetsArr = p.targets;
+    if (targetsArr instanceof window.jQuery) {
+      targetsArr = [targetsArr];
+    }
+    controls = p.indexControls;
+    prevControl = p.prevControl;
+    nextControl = p.nextControl;
+    activeClass = p.activeClass || 'active';
+    count = targetsArr[0].length;
+    interval = null;
+    firstTarget = 0;
+    lastTarget = targetsArr[0].length - 1;
+    if (!targetsArr[0]) {
       throw 'Which are the targets?';
     }
-    if (!p.indexTriggers) {
+    if (!(controls || prevControl || nextControl)) {
       throw 'Which are the triggers?';
     }
-    transitionDuration = p.transitionDuration || 600;
-    targetsActiveClass = p.targetsActiveClass || 'active';
-    visibleTime = p.visibleTime || 6000;
-    targets = p.targets;
-    controls = (p.indexTriggers && p.indexTriggers.controls) || p.indexTriggers;
-    activeClass = (p.indexTriggers && p.indexTriggers.activeClass) || 'active';
-    count = targets.length;
-    interval = null;
-    firstTarget = targets.first();
-    lastTarget = targets.last();
+    for (i in targetsArr) {
+      targets = targetsArr[i];
+      if (count !== targets.length) {
+        throw ['The number of elements "', targets.selector, '" must be the same as the others targets and indexControls!'].join('');
+      }
+    }
+    if (count !== controls.length) {
+      throw 'The number of indexControls must be the same as the targets!';
+    }
     if (count < 2) {
       return false;
     }
-    firstTarget.siblings().hide(0);
-    _addActiveClass = function(target) {
-      var i;
-      i = targets.index(target);
-      targets.removeClass(targetsActiveClass);
-      target.addClass(targetsActiveClass);
-      controls.removeClass(activeClass);
-      return controls.eq(i).addClass(activeClass);
-    };
-    _addActiveClass(firstTarget);
-    _loadNextTarget = function(current) {
-      var next;
-      next = current.next(targets);
-      return _loadTarget(next.length && next) || firstTarget;
-    };
-    _loadPrevTarget = function(current) {
-      var prev;
-      prev = current.prev(targets);
-      return _loadTarget((prev.length && prev) || lastTarget);
-    };
-    _loadTarget = function(nextTarget) {
-      if (typeof nextTarget === 'number') {
-        nextTarget = targets.eq(nextTarget);
+    this.current = firstTarget;
+    for (i in targetsArr) {
+      targets = targetsArr[i];
+      targets.first().siblings().hide(0);
+    }
+    _addActiveClass = function(index) {
+      for (i in targetsArr) {
+        targets = targetsArr[i];
+        targets.removeClass(activeClass);
+        targets.eq(index).addClass(activeClass);
       }
-      targets.stop(true, true).fadeOut(transitionDuration);
-      nextTarget.stop(true, true).fadeIn(transitionDuration);
-      _addActiveClass(nextTarget);
-      return nextTarget;
+      controls.removeClass(activeClass);
+      controls.eq(index).addClass(activeClass);
+      return this;
     };
-    _stopSlider = function() {
-      return window.clearInterval(interval);
+    _loadTarget = function(index) {
+      if (_this.current === index) {
+        return false;
+      }
+      for (i in targetsArr) {
+        targets = targetsArr[i];
+        targets.stop(true, true).fadeOut(transitionDuration);
+        targets.eq(index).stop(true, true).fadeIn(transitionDuration);
+        _addActiveClass(index);
+      }
+      _this.current = index;
+      return _this;
+    };
+    _loadNextTarget = function() {
+      var next;
+      next = targetsArr[0].siblings(':visible').next(targetsArr[0]);
+      _loadTarget((next.length && targetsArr[0].index(next)) || firstTarget);
+      return this;
+    };
+    _loadPrevTarget = function() {
+      var prev;
+      prev = targetsArr[0].siblings(':visible').prev(targetsArr[0]);
+      _loadTarget((prev.length && targetsArr[0].index(prev)) || lastTarget);
+      return this;
     };
     _setInterval = function(callback) {
-      return interval = window.setInterval(callback, visibleTime);
+      interval = window.setInterval(callback, visibleTime);
+      return this;
+    };
+    _stopSlider = function() {
+      window.clearInterval(interval);
+      return this;
     };
     _startSlider = function() {
-      var current;
-      current = targets.siblings('.' + targetsActiveClass);
       if (!p.inverseDirection) {
-        return _setInterval(function() {
-          return current = _loadNextTarget(current);
+        _setInterval(function() {
+          return _loadNextTarget();
         });
       } else {
-        return _setInterval(function() {
-          return current = _loadPrevTarget(current);
+        _setInterval(function() {
+          return _loadPrevTarget();
         });
       }
+      return this;
     };
+    _addActiveClass(firstTarget);
     this.init = function() {
       if (p.auto) {
         _startSlider();
@@ -186,9 +234,11 @@ Dependencies: jQuery 1.8.2
       if (controls != null) {
         controls.bind('click', function(e) {
           e.preventDefault();
-          _stopSlider();
           _loadTarget(controls.index($(this)));
-          return _startSlider();
+          if (p.auto) {
+            _stopSlider();
+            return _startSlider();
+          }
         });
       }
       return this;

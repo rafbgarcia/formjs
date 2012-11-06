@@ -78,73 +78,114 @@ do(window) ->
 
 
 
+    ###
+    Slider
+
+    Keep in mind that, because of the targets which can be an array of jQuery elements,
+    this functions works with the indexes of these elements.
+    This way, the number of controls and all targets must be the same, as it actually
+    should be!
+
+    params example:
+    @param params = {
+        targets           : $('.photos .photo'), // [$('.pictures'), $('.descriptions')]
+        indexControls     : $('.control'),
+        prevControl       : $('.slider-prev'),
+        nextControl       : $('.slider-next'),
+        auto              : false, // Default
+        activeClass       : 'active', // Default
+        transitionDuration: 600, // Default
+        visibleTime       : 6000 // Default
+    }
+    ###
     Eim.Slider = (params) ->
         new Slider(params)
 
-
     Slider = (p) ->
-        throw 'Which are the targets?' if ! p.targets
-        throw 'Which are the triggers?' if ! p.indexTriggers
-
         transitionDuration = p.transitionDuration or 600
-        targetsActiveClass = p.targetsActiveClass or 'active'
-        visibleTime = p.visibleTime or 6000
-        targets     = p.targets
-        controls    = (p.indexTriggers and p.indexTriggers.controls) or p.indexTriggers
-        activeClass = (p.indexTriggers and p.indexTriggers.activeClass) or 'active'
-        count       = targets.length
+        visibleTime        = p.visibleTime or 6000
+        targetsArr = p.targets
+        if targetsArr instanceof window.jQuery
+            targetsArr = [targetsArr]
+        controls    = p.indexControls
+        prevControl = p.prevControl # TODO
+        nextControl = p.nextControl # TODO
+        activeClass = p.activeClass or 'active'
+        count       = targetsArr[0].length
         interval    = null
-        firstTarget = targets.first()
-        lastTarget  = targets.last()
+        firstTarget = 0
+        lastTarget  = targetsArr[0].length - 1
+
+        # Exceptions
+        throw 'Which are the targets?' if ! targetsArr[0]
+        throw 'Which are the triggers?' if ! (controls or prevControl or nextControl)
+
+        # Checks if the number of elements are the same
+        for i, targets of targetsArr
+            throw ['The number of elements "', targets.selector, '" must be the same as the others targets and indexControls!'].join('') if count != targets.length
+        throw 'The number of indexControls must be the same as the targets!' if count != controls.length
+
 
         # Can't have slider if targets are less than 2
         return false if count < 2
 
-        firstTarget.siblings().hide(0)
+        @current = firstTarget
 
-        _addActiveClass = (target) ->
-            i = targets.index(target)
+        # Hide first targets
+        for i, targets of targetsArr
+            targets.first().siblings().hide(0)
 
-            targets.removeClass(targetsActiveClass)
-            target.addClass(targetsActiveClass)
+        _addActiveClass = (index) ->
+            for i, targets of targetsArr
+                targets.removeClass(activeClass)
+                targets.eq(index).addClass(activeClass)
+
             controls.removeClass(activeClass)
-            controls.eq(i).addClass(activeClass)
+            controls.eq(index).addClass(activeClass)
 
-        _addActiveClass(firstTarget)
+            @
 
-        _loadNextTarget = (current) ->
-            next = current.next(targets)
-            _loadTarget(next.length and next) or firstTarget
+        _loadTarget = (index) =>
+            return false if @current == index
 
-        _loadPrevTarget = (current) ->
-            prev = current.prev(targets)
-            _loadTarget((prev.length and prev) or lastTarget)
+            for i, targets of targetsArr
+                targets.stop(true, true).fadeOut(transitionDuration)
+                targets.eq(index).stop(true, true).fadeIn(transitionDuration)
+                _addActiveClass(index)
 
-        _loadTarget = (nextTarget) ->
-            if typeof nextTarget == 'number'
-                nextTarget = targets.eq(nextTarget)
+            @current = index
+            @
 
-            targets.stop(true, true).fadeOut(transitionDuration)
-            nextTarget.stop(true, true).fadeIn(transitionDuration)
-            _addActiveClass(nextTarget)
+        _loadNextTarget = () ->
+            # Checks if exists an next target, if not, firstTarget is passed
+            next = targetsArr[0].siblings(':visible').next(targetsArr[0])
+            _loadTarget( (next.length and targetsArr[0].index(next)) or firstTarget )
+            @
 
-            nextTarget
-
-        _stopSlider = () ->
-            window.clearInterval(interval)
+        _loadPrevTarget = () ->
+            # Checks if exists an previous target, if not, lastTarget is passed
+            prev = targetsArr[0].siblings(':visible').prev(targetsArr[0])
+            _loadTarget( (prev.length and targetsArr[0].index(prev)) or lastTarget )
+            @
 
         _setInterval = (callback) ->
             interval = window.setInterval(callback, visibleTime)
+            @
+
+        _stopSlider = () ->
+            window.clearInterval(interval)
+            @
 
         _startSlider = () ->
-            current = targets.siblings('.' + targetsActiveClass)
-
             if ! p.inverseDirection
-                _setInterval () ->
-                    current = _loadNextTarget(current)
+                _setInterval () -> _loadNextTarget()
             else
-                _setInterval () ->
-                    current = _loadPrevTarget(current)
+                _setInterval () -> _loadPrevTarget()
+            @
+
+        _addActiveClass(firstTarget)
+
+
 
         # Init slider and its events
         @init = () ->
@@ -158,10 +199,10 @@ do(window) ->
                 controls.bind 'click', (e) ->
                     e.preventDefault()
 
-                    _stopSlider()
                     _loadTarget(controls.index($(this)))
-                    _startSlider()
-
+                    if p.auto
+                        _stopSlider()
+                        _startSlider()
             @
 
         # Destroy Slider
