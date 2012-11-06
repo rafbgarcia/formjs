@@ -111,7 +111,7 @@ Dependencies: jQuery 1.8.2
     return new Slider(params);
   };
   Slider = function(p) {
-    var activeClass, controls, count, firstTarget, interval, lastTarget, targets, transitionDuration, visibleTime, _addActiveClass, _autoSlider, _loadIndexTarget, _loadNextTarget, _loadPreviousTarget;
+    var activeClass, controls, count, firstTarget, interval, lastTarget, targets, targetsActiveClass, transitionDuration, visibleTime, _addActiveClass, _loadNextTarget, _loadPrevTarget, _loadTarget, _setInterval, _startSlider, _stopSlider;
     if (!p.targets) {
       throw 'Which are the targets?';
     }
@@ -119,6 +119,7 @@ Dependencies: jQuery 1.8.2
       throw 'Which are the triggers?';
     }
     transitionDuration = p.transitionDuration || 600;
+    targetsActiveClass = p.targetsActiveClass || 'active';
     visibleTime = p.visibleTime || 6000;
     targets = p.targets;
     controls = (p.indexTriggers && p.indexTriggers.controls) || p.indexTriggers;
@@ -130,82 +131,70 @@ Dependencies: jQuery 1.8.2
     if (count < 2) {
       return false;
     }
-    targets.not(':first').hide(0);
-    controls.first().addClass(activeClass);
-    _addActiveClass = function(i) {
+    firstTarget.siblings().hide(0);
+    _addActiveClass = function(target) {
+      var i;
+      i = targets.index(target);
+      targets.removeClass(targetsActiveClass);
+      target.addClass(targetsActiveClass);
       controls.removeClass(activeClass);
       return controls.eq(i).addClass(activeClass);
     };
-    _autoSlider = function() {
-      var current;
-      current = targets.first();
-      if (!p.inverseDirection) {
-        return interval = window.setInterval(function() {
-          return current = _loadNextTarget(current);
-        }, visibleTime);
-      } else {
-        return interval = window.setInterval(function() {
-          return current = _loadPreviousTarget(current);
-        }, visibleTime);
-      }
-    };
+    _addActiveClass(firstTarget);
     _loadNextTarget = function(current) {
-      var i, next;
+      var next;
       next = current.next(targets);
-      next = (next.length && next) || firstTarget;
-      i = targets.index(next);
-      _addActiveClass(i);
-      current.stop(true, true).fadeOut(transitionDuration);
-      if (typeof p.onTransitionOver !== 'function') {
-        next.stop(true, true).fadeIn(transitionDuration);
-      } else {
-        next.stop(true, true).fadeIn(transitionDuration, function() {
-          return p.onTransitionOver(next);
-        });
-      }
-      return next;
+      return _loadTarget(next.length && next) || firstTarget;
     };
-    _loadPreviousTarget = function(current) {
+    _loadPrevTarget = function(current) {
       var prev;
       prev = current.prev(targets);
-      prev = (prev.length && prev) || lastTarget;
-      current.stop(true, true).fadeOut(transitionDuration);
-      if (typeof p.onTransitionOver !== 'function') {
-        prev.stop(true, true).fadeIn(transitionDuration);
+      return _loadTarget((prev.length && prev) || lastTarget);
+    };
+    _loadTarget = function(nextTarget) {
+      if (typeof nextTarget === 'number') {
+        nextTarget = targets.eq(nextTarget);
+      }
+      targets.stop(true, true).fadeOut(transitionDuration);
+      nextTarget.stop(true, true).fadeIn(transitionDuration);
+      _addActiveClass(nextTarget);
+      return nextTarget;
+    };
+    _stopSlider = function() {
+      return window.clearInterval(interval);
+    };
+    _setInterval = function(callback) {
+      return interval = window.setInterval(callback, visibleTime);
+    };
+    _startSlider = function() {
+      var current;
+      current = targets.siblings('.' + targetsActiveClass);
+      if (!p.inverseDirection) {
+        return _setInterval(function() {
+          return current = _loadNextTarget(current);
+        });
       } else {
-        prev.stop(true, true).fadeIn(transitionDuration, function() {
-          return p.onTransitionOver(prev);
+        return _setInterval(function() {
+          return current = _loadPrevTarget(current);
         });
       }
-      return prev;
-    };
-    _loadIndexTarget = function(i) {
-      var next;
-      next = targets.eq(i);
-      targets.stop(true, true).fadeOut(transitionDuration);
-      next.stop(true, true).fadeIn(transitionDuration);
-      return next;
     };
     this.init = function() {
       if (p.auto) {
-        _autoSlider();
+        _startSlider();
       }
       if (controls != null) {
         controls.bind('click', function(e) {
-          var i, _this;
           e.preventDefault();
-          _this = $(this);
-          i = controls.index(_this);
-          window.clearInterval(interval);
-          _loadIndexTarget(i);
-          _addActiveClass(i);
-          return _autoSlider();
+          _stopSlider();
+          _loadTarget(controls.index($(this)));
+          return _startSlider();
         });
       }
       return this;
     };
     this.destroy = function() {
-      window.clearInterval(interval);
+      _stopSlider();
       controls.unbind('click');
       return this;
     };
@@ -432,7 +421,7 @@ Dependencies: jQuery 1.8.2
     }
     /*
             if params.onSubmit?
-                @element.blur (e) ->
+                @element.submit (e) =>
                     e.preventDefault()
                     params = @element.serialize()
     */

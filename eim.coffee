@@ -7,9 +7,11 @@ Dependencies: jQuery 1.8.2
 do(window) ->
     Eim = {}
 
+
     # Form
     Eim.Form = (params) ->
         new Form(params)
+
 
     # Validators
     Eim.validators =
@@ -76,7 +78,6 @@ do(window) ->
 
 
 
-
     Eim.Slider = (params) ->
         new Slider(params)
 
@@ -86,125 +87,96 @@ do(window) ->
         throw 'Which are the triggers?' if ! p.indexTriggers
 
         transitionDuration = p.transitionDuration or 600
-        visibleTime   = p.visibleTime or 6000
-        targets       = p.targets
-        controls      = (p.indexTriggers and p.indexTriggers.controls) or p.indexTriggers
-        activeClass   = (p.indexTriggers and p.indexTriggers.activeClass) or 'active'
-        count         = targets.length
-        interval      = null
-        firstTarget   = targets.first()
-        lastTarget    = targets.last()
+        targetsActiveClass = p.targetsActiveClass or 'active'
+        visibleTime = p.visibleTime or 6000
+        targets     = p.targets
+        controls    = (p.indexTriggers and p.indexTriggers.controls) or p.indexTriggers
+        activeClass = (p.indexTriggers and p.indexTriggers.activeClass) or 'active'
+        count       = targets.length
+        interval    = null
+        firstTarget = targets.first()
+        lastTarget  = targets.last()
 
-
-        # If targets are less than 2, it does not need any effect, right?
+        # Can't have slider if targets are less than 2
         return false if count < 2
 
+        firstTarget.siblings().hide(0)
 
-        # Hides all targets except first and add active class on the first control
-        targets.not(':first').hide(0)
-        controls.first().addClass(activeClass)
+        _addActiveClass = (target) ->
+            i = targets.index(target)
 
-        _addActiveClass = (i) ->
+            targets.removeClass(targetsActiveClass)
+            target.addClass(targetsActiveClass)
             controls.removeClass(activeClass)
             controls.eq(i).addClass(activeClass)
 
-        _autoSlider = () ->
-            current = targets.first()
-
-            if ! p.inverseDirection
-                interval = window.setInterval(() ->
-                    current = _loadNextTarget(current)
-                , visibleTime)
-            else
-                interval = window.setInterval(() ->
-                    current = _loadPreviousTarget(current)
-                , visibleTime)
-
-
+        _addActiveClass(firstTarget)
 
         _loadNextTarget = (current) ->
             next = current.next(targets)
-            next = (next.length and next) or firstTarget
-            i    = targets.index(next)
+            _loadTarget(next.length and next) or firstTarget
 
-            _addActiveClass(i)
-
-            current.stop(true, true).fadeOut(transitionDuration)
-
-            if(typeof p.onTransitionOver != 'function')
-                next.stop(true, true).fadeIn(transitionDuration)
-            else
-                next.stop(true, true).fadeIn transitionDuration, () ->
-                    # I made this hook for testing the transitions, but it may be useful sometimes
-                    # @param next = visible item
-                    p.onTransitionOver(next)
-            next
-
-        _loadPreviousTarget = (current) ->
+        _loadPrevTarget = (current) ->
             prev = current.prev(targets)
-            prev = (prev.length and prev) or lastTarget
+            _loadTarget((prev.length and prev) or lastTarget)
 
-            current.stop(true, true).fadeOut(transitionDuration)
+        _loadTarget = (nextTarget) ->
+            if typeof nextTarget == 'number'
+                nextTarget = targets.eq(nextTarget)
 
-            if(typeof p.onTransitionOver != 'function')
-                prev.stop(true, true).fadeIn(transitionDuration)
-            else
-                prev.stop(true, true).fadeIn transitionDuration, () ->
-                    # I made this hook for testing the transitions, but it may be useful sometimes
-                    # @param prev = visible item
-                    p.onTransitionOver(prev)
-
-            prev
-
-
-        _loadIndexTarget = (i) ->
-            next = targets.eq(i)
             targets.stop(true, true).fadeOut(transitionDuration)
-            next.stop(true, true).fadeIn(transitionDuration)
+            nextTarget.stop(true, true).fadeIn(transitionDuration)
+            _addActiveClass(nextTarget)
 
-            next
+            nextTarget
 
+        _stopSlider = () ->
+            window.clearInterval(interval)
+
+        _setInterval = (callback) ->
+            interval = window.setInterval(callback, visibleTime)
+
+        _startSlider = () ->
+            current = targets.siblings('.' + targetsActiveClass)
+
+            if ! p.inverseDirection
+                _setInterval () ->
+                    current = _loadNextTarget(current)
+            else
+                _setInterval () ->
+                    current = _loadPrevTarget(current)
 
         # Init slider and its events
         @init = () ->
             # Auto slider
             if p.auto
-                _autoSlider()
+                _startSlider()
 
             # On click event
-            # Numeric triggers
+            ## Numeric triggers
             if controls?
                 controls.bind 'click', (e) ->
                     e.preventDefault()
-                    _this = $(this)
-                    i = controls.index(_this)
 
-                    window.clearInterval(interval)
+                    _stopSlider()
+                    _loadTarget(controls.index($(this)))
+                    _startSlider()
 
-                    _loadIndexTarget(i)
-                    _addActiveClass(i)
-
-                    _autoSlider()
-
-            return @
-
+            @
 
         # Destroy Slider
         @destroy = () ->
-            window.clearInterval(interval)
+            _stopSlider()
             controls.unbind('click')
-            return @
-
+            @
 
         # Remake Slider
         @remake = () ->
             @init()
-            return @
+            @
 
-
-        return @init()
+        @init()
         # End Slider
-
 
 
     Eim.sendMessage = (message, title) ->
@@ -248,7 +220,6 @@ do(window) ->
                 if( ! _this.val())
                     _this.val(_this.attr('placeholder'))
 
-
             # Checks if the form has fields with value attribute equals to placeholder
             if(typeof callback == 'function')
                 forms.submit (e) ->
@@ -272,7 +243,7 @@ do(window) ->
 
                         callback(errors, that)
 
-
+        # End placeholder
 
 
     Form = (params) ->
@@ -315,7 +286,6 @@ do(window) ->
 
             callback(error)
 
-
         @element = params.form
 
         @fields = (name) ->
@@ -356,14 +326,11 @@ do(window) ->
 
             @
 
-
         blurType = params.blurType
 
 
-
-        # # On Blur
-
-        # ### Defaults
+        # On Blur
+        # # Defaults
 
         _onBlurTarget = (field, form) ->
             # return target which will receive the errors
@@ -392,18 +359,15 @@ do(window) ->
             else if error.length
                 error.html('')
 
-
-
+        # # Actions
         if params.fieldBlur == true
             blurTarget = params.onBlurTarget
 
-            # Gets default onBlurTarget if none is given
             if typeof blurTarget != 'function'
                 blurTarget = _onBlurTarget
 
             if blurType? and blurType != 'each'
                 _this.element.before('<div id="form-errors"></div>')
-
 
             for i of formFields
                 do (i) ->
@@ -424,13 +388,10 @@ do(window) ->
                             else if blurType == 'aio'
                                 _blurAio(err, target, field, _this.element)
 
-
-
-
         # Validates all fields
         ###
         if params.onSubmit?
-            @element.blur (e) ->
+            @element.submit (e) =>
                 e.preventDefault()
                 params = @element.serialize()
         ###

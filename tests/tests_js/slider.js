@@ -20,11 +20,7 @@ $(function() {
 		},
 		auto: true,
 		visibleTime: _visibleTime,
-		transitionDuration: _transitionDuration,
-
-		onTransitionOver: function(current) {
-			//
-		}
+		transitionDuration: _transitionDuration
 	});
 
 	test('Hides all targets except first', function() {
