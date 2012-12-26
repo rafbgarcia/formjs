@@ -116,6 +116,9 @@ do(window) ->
         firstTarget = 0
         lastTarget  = targetsArr[0].length - 1
 
+        # Can't have slider if targets are less than 2
+        return false if count < 2
+
         # Exceptions
         throw 'Which are the targets?' if ! targetsArr[0]
         throw 'Which are the triggers?' if ! (controls or prevControl or nextControl)
@@ -123,11 +126,9 @@ do(window) ->
         # Checks if the number of elements are the same
         for i, targets of targetsArr
             throw ['The number of elements "', targets.selector, '" must be the same as the others targets and indexControls!'].join('') if count != targets.length
-        throw 'The number of indexControls must be the same as the targets!' if count != controls.length
+        throw 'The number of indexControls must be the same as the targets!' if controls && count != controls.length
 
 
-        # Can't have slider if targets are less than 2
-        return false if count < 2
 
         @current = firstTarget
 
@@ -140,8 +141,9 @@ do(window) ->
                 targets.removeClass(activeClass)
                 targets.eq(index).addClass(activeClass)
 
-            controls.removeClass(activeClass)
-            controls.eq(index).addClass(activeClass)
+            if controls
+                controls.removeClass(activeClass)
+                controls.eq(index).addClass(activeClass)
 
             @
 
@@ -158,14 +160,16 @@ do(window) ->
 
         _loadNextTarget = () ->
             # Checks if exists an next target, if not, firstTarget is passed
-            next = targetsArr[0].siblings(':visible').next(targetsArr[0])
-            _loadTarget( (next.length and targetsArr[0].index(next)) or firstTarget )
+            next   = targetsArr[0].siblings(':visible').next(targetsArr[0])
+            target = (next.length and targetsArr[0].index(next)) or firstTarget
+            _loadTarget target
             @
 
         _loadPrevTarget = () ->
             # Checks if exists an previous target, if not, lastTarget is passed
-            prev = targetsArr[0].siblings(':visible').prev(targetsArr[0])
-            _loadTarget( (prev.length and targetsArr[0].index(prev)) or lastTarget )
+            prev   = targetsArr[0].siblings(':visible').prev(targetsArr[0])
+            target = (prev.length and targetsArr[0].index(prev)) or lastTarget
+            _loadTarget target
             @
 
         _setInterval = (callback) ->
@@ -182,6 +186,9 @@ do(window) ->
             else
                 _setInterval () -> _loadPrevTarget()
             @
+        _restartSlider = ->
+            _stopSlider()
+            _startSlider()
 
         _addActiveClass(firstTarget)
 
@@ -201,8 +208,18 @@ do(window) ->
 
                     _loadTarget(controls.index($(this)))
                     if p.auto
-                        _stopSlider()
-                        _startSlider()
+                        _restartSlider()
+
+            if prevControl or nextControl
+                prevControl.click (e) ->
+                    e.preventDefault()
+                    _loadPrevTarget()
+                    _restartSlider()
+                nextControl.click (e) ->
+                    e.preventDefault()
+                    _loadNextTarget()
+                    _restartSlider()
+
             @
 
         # Destroy Slider
