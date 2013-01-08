@@ -134,7 +134,8 @@ do(window) ->
 
         # Hide first targets
         for i, targets of targetsArr
-            targets.first().siblings().hide(0)
+            targets.not(':first').hide(0)
+            # targets.first().siblings().hide(0)
 
         _addActiveClass = (index) ->
             for i, targets of targetsArr
