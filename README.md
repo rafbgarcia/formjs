@@ -12,7 +12,7 @@ _View samples page for examples of implementation_
 
 # Form
 
-Suppose you have a form:
+Form:
 
     <form action="" method="post" id="form">
         <div>
@@ -31,7 +31,7 @@ Suppose you have a form:
     </form>
 
 
-Validating will be
+Validating:
 
 	$(function() {
         var form,
@@ -52,19 +52,18 @@ Validating will be
             },
             fieldBlur: true, // true if you want validation on field blur
             blurType: 'each' // 'each' or 'aio'
-                             // 'each' puts validation below of each field
+                             // 'each' puts validation after each field
                              // 'aio' puts all validations in a single element before form tag
         });
     });
 
-    <!-- If the field has error, an span will be placed after the input -->
-    ...
+If the field has error, an span will be placed after the input
+
     <div>
         <label for="">Name</label>
         <input type="text" name="name">
         <span class="field-error">Field is required</span>
     </div>
-    ...
 
 
 
@@ -87,19 +86,11 @@ If you need a custom message: `validators.email('Hey! This is not a valid email!
 
 Need a new validator?
 
-    ...
-    <input type="text" name="custom">
-    ...
-
-    ...
     validators.custom = {
         isValid: function(val) {
             return val === "Hello there";
         },
         errMessage: 'Value must be "Hello there"'
     };
-    ...
-    custom: validators.custom
-    ...
 
 
