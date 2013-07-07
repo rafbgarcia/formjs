@@ -1,10 +1,10 @@
-## Still in development, but you already can use what is described below
+## Form & Validators
 
 
 ### Starting
 
     <script src="jquery.js"></script>
-    <script src="eim.js"></script>
+    <script src="form.js"></script>
 
 
 _View samples page for examples of implementation_
@@ -12,7 +12,7 @@ _View samples page for examples of implementation_
 
 # Form
 
-Form validation is easy as follow:
+Suppose you have a form:
 
     <form action="" method="post" id="form">
         <div>
@@ -31,11 +31,13 @@ Form validation is easy as follow:
     </form>
 
 
+Validating will be
+
 	$(function() {
         var form,
-            validators = Eim.validators;
+            validators = Validators();
 
-        form = Eim.Form({
+        form = Form({
             form: $('#form'),
             fields : {
                 email: {
@@ -66,25 +68,24 @@ Form validation is easy as follow:
 
 
 
-## Eim.Validators
+## Validators
 
-You are not required to use integrated to Eim.Form
+You are not required to use integrated to Form
 
 	$(function() {
 		$('input#email').blur(function() {
-			var _this      = $(this),
-				value 	   = _this.val(),
-				validators = Eim.validators;
+			var self  = $(this),
+				value = self.val();
 
-			if( ! validators.email().isValid(value)) {
-				_this.css('border-color', '#f00');
+			if( ! Validators().email().isValid(value)) {
+				self.css('border-color', '#f00');
 			}
 		});
 	});
 
 If you need a custom message: `validators.email('Hey! This is not a valid email!')`
 
-Need a new validator? No problem:
+Need a new validator?
 
     ...
     <input type="text" name="custom">
@@ -100,35 +101,5 @@ Need a new validator? No problem:
     ...
     custom: validators.custom
     ...
-
-
-
-
-# Placeholder
-
-Apply placeholder **(IE only)**.
-
-`Eim.placeholder();`
-
-
-If you need to handle the submited form, just use:
-
-`Eim.placeholder(function(errors, form) {});`
-
-`form` is the form which is being submitted.
-
-`errors` brings the $('input') elements that has value == placeholder, so you can handle it:
-
-	Eim.placeholder(function(errors, form) {
-		if( ! errors) {
-			form.submit();
-		}
-		else {
-			for(i in errors) {
-				console.log(errors[i].attr('name'));
-			}
-		}
-	});
-
 
 

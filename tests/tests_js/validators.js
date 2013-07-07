@@ -1,30 +1,30 @@
-var validators = Eim.validators,
-    t;
+var validators = Validators(),
+    current;
 
 module('Validators');
 
 test('required', function() {
-    t = validators.required();
+    current = validators.required();
 
-    ok( t.isValid('a') );
-    ok( ! t.isValid('') );
-    ok( ! t.isValid('   ') );
+    ok( current.isValid('a') );
+    ok( ! current.isValid('') );
+    ok( ! current.isValid('   ') );
 
     equal( validators.required('Required').errMessage, 'Required' );
-    equal( t.errMessage, 'Field is required' );
+    equal( current.errMessage, 'Field is required' );
 });
 
 test('email', function() {
-    t = validators.email();
+    current = validators.email();
 
-    ok( t.isValid('test@gmail.com') );
-    ok( t.isValid('test.foo_@yahoo.com') );
-    ok( t.isValid('1test@yahoo.com') );
+    ok( current.isValid('test@gmail.com') );
+    ok( current.isValid('test.foo_@yahoo.com') );
+    ok( current.isValid('1test@yahoo.com') );
 
-    ok( ! t.isValid('.testbla@yahoo.com') );
-    ok( ! t.isValid('') );
-    ok( ! t.isValid('  ') );
-    ok( ! t.isValid('wow') );
+    ok( ! current.isValid('.testbla@yahoo.com') );
+    ok( ! current.isValid('') );
+    ok( ! current.isValid('  ') );
+    ok( ! current.isValid('wow') );
 });
 
 test('match', function() {
@@ -33,16 +33,16 @@ test('match', function() {
     // Insert a test field
     $('#qunit').after('<input id="password" name="password" value="test value" style="display:none">');
 
-    _validate('password');
-    _validate($('#password'));
+    validate('password');
+    validate($('#password'));
 
-    function _validate(field) {
-        t = validators.match(field);
+    function validate(field) {
+        current = validators.match(field);
 
-        ok( t.isValid('test value') );
-        ok( ! t.isValid('anything else') );
-        ok( ! t.isValid('must fail') );
-        equal( t.errMessage, 'Field does not match with field password' );
+        ok( current.isValid('test value') );
+        ok( ! current.isValid('anything else') );
+        ok( ! current.isValid('must fail') );
+        equal( current.errMessage, 'Field does not match with field password' );
     }
 });
 
@@ -52,67 +52,67 @@ test('match', function() {
 module('Numeric Validators');
 
 test('numeric', function() {
-    t = validators.numeric();
+    current = validators.numeric();
 
-    ok( t.isValid(-13) );
-    ok( t.isValid(12) );
-    ok( t.isValid('46') );
-    ok( t.isValid('-253') );
+    ok( current.isValid(-13) );
+    ok( current.isValid(12) );
+    ok( current.isValid('46') );
+    ok( current.isValid('-253') );
 
-    ok( ! t.isValid('not numeric') );
-    ok( ! t.isValid('11c') );
+    ok( ! current.isValid('not numeric') );
+    ok( ! current.isValid('11c') );
 });
 
 test('min', function() {
-    t = validators.min(12);
+    current = validators.min(12);
 
-    ok( t.isValid(12) );
-    ok( t.isValid(13) );
-    ok( t.isValid(1000) );
-    ok( t.isValid('12') );
-    ok( t.isValid('13') );
-    ok( t.isValid('1000') );
+    ok( current.isValid(12) );
+    ok( current.isValid(13) );
+    ok( current.isValid(1000) );
+    ok( current.isValid('12') );
+    ok( current.isValid('13') );
+    ok( current.isValid('1000') );
 
-    ok( ! t.isValid(11) );
-    ok( ! t.isValid(0) );
-    ok( ! t.isValid(-12) );
-    ok( ! t.isValid('11') );
-    ok( ! t.isValid('0') );
-    ok( ! t.isValid('-12') );
+    ok( ! current.isValid(11) );
+    ok( ! current.isValid(0) );
+    ok( ! current.isValid(-12) );
+    ok( ! current.isValid('11') );
+    ok( ! current.isValid('0') );
+    ok( ! current.isValid('-12') );
 });
 
 test('max', function() {
-    t = validators.max(18);
+    current = validators.max(18);
 
-    ok( t.isValid(18) );
-    ok( t.isValid(11) );
-    ok( t.isValid(0) );
-    ok( t.isValid(-18) );
-    ok( t.isValid('18') );
-    ok( t.isValid('11') );
-    ok( t.isValid('0') );
-    ok( t.isValid('-18') );
+    ok( current.isValid(18) );
+    ok( current.isValid(11) );
+    ok( current.isValid(0) );
+    ok( current.isValid(-18) );
+    ok( current.isValid('18') );
+    ok( current.isValid('11') );
+    ok( current.isValid('0') );
+    ok( current.isValid('-18') );
 
-    ok( ! t.isValid(19) );
-    ok( ! t.isValid(1000) );
-    ok( ! t.isValid('19') );
-    ok( ! t.isValid('1000') );
+    ok( ! current.isValid(19) );
+    ok( ! current.isValid(1000) );
+    ok( ! current.isValid('19') );
+    ok( ! current.isValid('1000') );
 });
 
 test('between', function() {
-    t = validators.between(1, 10);
-    ok( t.isValid(1) );
-    ok( t.isValid(10) );
-    ok( t.isValid(9) );
-    ok( t.isValid('1') );
-    ok( t.isValid('10') );
-    ok( t.isValid('9') );
+    current = validators.between(1, 10);
+    ok( current.isValid(1) );
+    ok( current.isValid(10) );
+    ok( current.isValid(9) );
+    ok( current.isValid('1') );
+    ok( current.isValid('10') );
+    ok( current.isValid('9') );
 
-    ok( ! t.isValid(11) );
-    ok( ! t.isValid(-1) );
-    ok( ! t.isValid(0) );
-    ok( ! t.isValid('11') );
-    ok( ! t.isValid('0') );
+    ok( ! current.isValid(11) );
+    ok( ! current.isValid(-1) );
+    ok( ! current.isValid(0) );
+    ok( ! current.isValid('11') );
+    ok( ! current.isValid('0') );
 });
 
 
@@ -121,37 +121,37 @@ test('between', function() {
 module('Text Validators');
 
 test('minLength', function() {
-    t = validators.minLength(4);
+    current = validators.minLength(4);
 
-    ok( t.isValid('Joel') );
-    ok( t.isValid('Andrew') );
-    ok( t.isValid('Jack') );
-    ok( t.isValid('a  b') );
+    ok( current.isValid('Joel') );
+    ok( current.isValid('Andrew') );
+    ok( current.isValid('Jack') );
+    ok( current.isValid('a  b') );
 
-    ok( ! t.isValid('Foo') );
-    ok( ! t.isValid('Bar') );
-    ok( ! t.isValid('      ') );
-    ok( ! t.isValid('   a   ') );
+    ok( ! current.isValid('Foo') );
+    ok( ! current.isValid('Bar') );
+    ok( ! current.isValid('      ') );
+    ok( ! current.isValid('   a   ') );
 });
 
 test('maxLength', function() {
-    t = validators.maxLength(4);
+    current = validators.maxLength(4);
 
-    ok( t.isValid('       ') );
-    ok( t.isValid('No') );
+    ok( current.isValid('       ') );
+    ok( current.isValid('No') );
 
-    ok( ! t.isValid('Iabadabadu') );
-    ok( ! t.isValid('a    b') );
+    ok( ! current.isValid('Iabadabadu') );
+    ok( ! current.isValid('a    b') );
 });
 
 test('betweenLength', function() {
-    t = validators.betweenLength(1, 10);
+    current = validators.betweenLength(1, 10);
 
-    ok( t.isValid('Between') );
-    ok( t.isValid('Hey!') );
-    ok( t.isValid(123) );
+    ok( current.isValid('Between') );
+    ok( current.isValid('Hey!') );
+    ok( current.isValid(123) );
 
-    ok( ! t.isValid('Should not pass') );
-    ok( ! t.isValid('   ') );
-    ok( ! t.isValid('Has more than 10 characters') );
+    ok( ! current.isValid('Should not pass') );
+    ok( ! current.isValid('   ') );
+    ok( ! current.isValid('Has more than 10 characters') );
 });

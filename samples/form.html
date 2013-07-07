@@ -46,11 +46,12 @@
 
 
         <script type="text/javascript" src="./assets/jquery.js"></script>
-        <script type="text/javascript" src="../eim.js"></script>
+        <script type="text/javascript" src="../form.js"></script>
         <script type="text/javascript">
         $(function() {
             var form,
-                validators = Eim.validators;
+                validators = Validators();
+
             validators.custom = {
                 isValid: function(val) {
                     return val === "Hello there";
@@ -58,7 +59,7 @@
                 errMessage: 'Value must be "Hello there"'
             };
 
-            form = Eim.Form({
+            form = Form({
                 form: $('#form'),
                 fields : {
                     email: {
@@ -81,7 +82,7 @@
                     }
                 },
                 fieldBlur: true, // true if you want validation on field blur
-                blurType: 'each' // 'each' or 'aio'
+                blurType: 'aio' // 'each' or 'aio'
                                  // 'each' puts validation below of each field
                                  // 'aio' puts all validations in a single element before form tag
             });

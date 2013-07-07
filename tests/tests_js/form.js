@@ -1,5 +1,5 @@
 var form, f, i,
-validators = Eim.validators,
+validators = Validators(),
 formHtml   =
 '<form action="" id="form-test">' +
 	'<div><label>Name: </label><input type="text" name="name"></div>' +
@@ -12,7 +12,7 @@ formHtml   =
 $(function() {
 	$('#qunit').after(formHtml);
 
-	form = Eim.Form({
+	form = Form({
 		form: $('#form-test'),
 		fields : {
 			email: {
@@ -138,7 +138,7 @@ test('onBlur', function() {
 
 
 		// blurType = 'each'
-		form = Eim.Form({
+		form = Form({
 			form: $('#form-test'),
 			fields : {
 				email: {
@@ -173,7 +173,7 @@ test('onBlur', function() {
 
 
 		// blurType = 'aio'
-		form = Eim.Form({
+		form = Form({
 			form: $('#form-test'),
 			fields : {
 				email: {
